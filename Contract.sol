@@ -1,1 +1,71 @@
-t
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+
+contract contract_name is Ownable {
+    uint256 public claimAmount = 0.1 ether;  // 0.1 BNB
+    uint256 public claimInterval = 1 days;   // Default: 24 hours
+
+
+    mapping(address => uint256) public lastClaimTime;
+
+
+    event Claimed(address indexed user, uint256 amount);
+
+
+    // Modifier to allow only external wallet addresses (EOAs)
+    modifier onlyEOA() {
+        require(msg.sender == tx.origin, "Only external wallet addresses allowed");
+        _;
+    }
+
+
+    // Function to allow users to claim BNB
+    function claimBNB() public onlyEOA {
+        require(lastClaimTime[msg.sender] + claimInterval <= block.timestamp, "Can't claim yet");
+        require(address(this).balance >= claimAmount, "Contract balance is insufficient");
+
+
+        lastClaimTime[msg.sender] = block.timestamp;
+
+
+        (bool success,) = msg.sender.call{value: claimAmount}("");
+        require(success, "BNB transfer failed");
+
+
+        emit Claimed(msg.sender, claimAmount);
+    }
+
+
+    // Function to set the claim amount (onlyOwner)
+    function setClaimAmount(uint256 _claimAmount) public onlyOwner {
+        claimAmount = _claimAmount;
+    }
+
+
+    // Function to set the claim interval (onlyOwner)
+    function setClaimInterval(uint256 _claimInterval) public onlyOwner {
+        claimInterval = _claimInterval;
+    }
+
+
+    // Function to withdraw BNB from the contract (onlyOwner)
+    function withdrawBNB() public onlyOwner {
+        uint256 contractBalance = address(this).balance;
+        require(contractBalance > 0, "No BNB to withdraw");
+        (bool success,) = owner().call{value: contractBalance}("");
+        require(success, "BNB withdrawal failed");
+    }
+
+
+    // Fallback function to accept BNB
+    receive() external payable {}
+
+
+    // Fallback function to accept BNB (for old Solidity versions)
+    fallback() external payable {}
+}
+
