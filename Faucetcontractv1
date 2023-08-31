@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-contract BNBGiveaway is Ownable {
+contract contract_name is Ownable {
     uint256 public claimAmount = 0.1 ether;  // 0.1 BNB
     uint256 public claimInterval = 1 days;   // Default: 24 hours
 
